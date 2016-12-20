@@ -29,12 +29,17 @@ class FluentRefreshToken extends AbstractFluentAdapter implements RefreshTokenIn
      *
      * @return \League\OAuth2\Server\Entity\RefreshTokenEntity
      */
-    public function get($token)
+    public function get($token, $includeExpired=false)
     {
-        $result = $this->getConnection()->table('oauth_refresh_tokens')
-                ->where('oauth_refresh_tokens.id', $token)
-                ->where('oauth_refresh_tokens.expire_time', '>=', time())
-                ->first();
+        $query = $this->getConnection()->table('oauth_refresh_tokens')
+                ->where('oauth_refresh_tokens.id', $token);
+
+        if(!$includeExpired)
+        {
+            $query->where('oauth_refresh_tokens.expire_time', '>=', time());
+        }
+
+        $result = $query->first();
 
         if (is_null($result)) {
             return;
@@ -58,7 +63,7 @@ class FluentRefreshToken extends AbstractFluentAdapter implements RefreshTokenIn
     public function create($token, $expireTime, $accessToken)
     {
         // We need to know if there is a record with the same token on the table.
-        $refreshToken = $this->get($token);
+        $refreshToken = $this->get($token,true);
 
         // If the token already exits then update it, if not update the record.
         if( empty($refreshToken) )
