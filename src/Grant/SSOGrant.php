@@ -30,9 +30,9 @@ class SSOGrant extends AbstractGrant
     const  SSO_IDENTITY_FIELD = 'identity';
     const SSO_REDIRECT_URI_FIELD = 'redirect_uri';
     const SSO_SIGNATURE_FIELD = 'signature';
-    const SSO_CLIENT_FIELD = 'client_app';
-    const SSO_NONCE_FIELD = 'nonce';
-    const SSO_ORGANIZATION_FIELD = 'organization';
+    const SSO_CLIENT_FIELD = 'client_app'; // Determine which client tries to authenticate to Arista API (PILOT-4156)
+    const SSO_NONCE_FIELD = 'nonce'; // A yyyyMMddHHmmss+zzzz timestamp that the partner website can check to prevent replay attacks, e.g. 20170524111430-05:00  (PILOT-4156)
+    const SSO_ORGANIZATION_FIELD = 'organization'; // Organization id of the client (X-Intergy-PracticeID) (PILOT-4156)
 
     /**
      * Grant identifier
@@ -130,18 +130,21 @@ class SSOGrant extends AbstractGrant
             throw new Exception\InvalidRequestException('signature');
         }
 
+        // Extra credential to recognize the client
         $client_app = $this->server->getRequest()->request->get(self::SSO_CLIENT_FIELD, null);
         if ( is_null($client_app) )
         {
             throw new Exception\InvalidRequestException('client_app');
         }
 
+        // Intergy extra credential (PILOT-4156)
         $nonce = $this->server->getRequest()->request->get(self::SSO_NONCE_FIELD, null);
         if ( is_null($nonce) )
         {
             throw new Exception\InvalidRequestException('nonce');
         }
 
+        // Intergy extra credential (PILOT-4156)
         $organization = $this->server->getRequest()->request->get(self::SSO_ORGANIZATION_FIELD, null);
         if ( is_null($organization) )
         {
@@ -165,9 +168,9 @@ class SSOGrant extends AbstractGrant
             self::SSO_IDENTITY_FIELD => $identity,
             self::SSO_REDIRECT_URI_FIELD => $redirect_uri,
             self::SSO_SIGNATURE_FIELD => $signature,
-            self::SSO_CLIENT_FIELD => $client_app,
-            self::SSO_NONCE_FIELD => $nonce,
-            self::SSO_ORGANIZATION_FIELD => $organization
+            self::SSO_CLIENT_FIELD => $client_app, // Intergy extra credential (PILOT-4156)
+            self::SSO_NONCE_FIELD => $nonce, // Intergy extra credential (PILOT-4156)
+            self::SSO_ORGANIZATION_FIELD => $organization // Intergy extra credential (PILOT-4156)
         ];
 
         // Check if user's username and password are correct
