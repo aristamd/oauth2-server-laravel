@@ -162,4 +162,25 @@ class FluentSession extends AbstractFluentAdapter implements SessionInterface
                ->setId($result->id)
                ->setOwner($result->owner_type, $result->owner_id);
     }
+
+    /**
+     * Removes access_tokens related to the session of an specified user
+     *
+     * @param int   $userId   Id of the user related to the session
+     * @return void
+     */
+    public function expireSessionByUserId( $userId )
+    {
+        $session = $this->getConnection()->table('oauth_sessions')
+            ->select('oauth_sessions.id')
+            ->where('oauth_sessions.owner_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+        if ( !empty($session) )
+        {
+            $this->getConnection()->table('oauth_access_tokens')
+                ->where('session_id', $session->id)
+                ->delete();
+        }
+    }
 }
