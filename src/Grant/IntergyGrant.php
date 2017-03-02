@@ -33,6 +33,7 @@ class IntergyGrant extends AbstractGrant
     const SSO_CLIENT_FIELD = 'client_app'; // Determine which client tries to authenticate to Arista API (PILOT-4156)
     const SSO_NONCE_FIELD = 'nonce'; // A yyyyMMddHHmmss+zzzz timestamp that the partner website can check to prevent replay attacks, e.g. 20170524111430-05:00  (PILOT-4156)
     const SSO_PRACTICE_ID = 'practice_id'; // Organization id of the client (X-Intergy-PracticeID) (PILOT-4156)
+    const SSO_LICENSE_ID = 'license_id'; // Organization id of the client (X-Intergy-LicenseID) (PILOT-4156)
 
     /**
      * Grant identifier
@@ -144,6 +145,13 @@ class IntergyGrant extends AbstractGrant
             throw new Exception\InvalidRequestException('organization');
         }
 
+        // Intergy extra credential (PILOT-4156)
+        $licenseId = $this->server->getRequest()->request->get(self::SSO_LICENSE_ID, null);
+        if ( is_null($licenseId) )
+        {
+            throw new Exception\InvalidRequestException(self::SSO_LICENSE_ID);
+        }
+
         // Validate client ID and client secret
         $client = $this->server->getClientStorage()->get(
             $clientId,
@@ -162,7 +170,8 @@ class IntergyGrant extends AbstractGrant
             self::SSO_REDIRECT_URI_FIELD => $redirect_uri,
             self::SSO_SECURITY_DIGEST => $signature,
             self::SSO_NONCE_FIELD => $nonce, // Intergy extra credential (PILOT-4156)
-            self::SSO_PRACTICE_ID => $organization // Intergy extra credential (PILOT-4156)
+            self::SSO_PRACTICE_ID => $organization, // Intergy extra credential (PILOT-4156)
+            self::SSO_LICENSE_ID => $licenseId
         ];
 
         // Check if user's username and password are correct
