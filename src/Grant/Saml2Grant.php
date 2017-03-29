@@ -27,7 +27,7 @@ class Saml2Grant extends AbstractGrant
     /**
     * Define constants for the name of properties expected into the credentials.
     */
-    const SAML2_LOGIN_FIELD = 'login';
+    const SAML2_USERNAME_FIELD = 'username';
     const SAML2_REMOTE_SESSION_ID_FIELD = 'remote_session_id';
     
     /**
@@ -35,7 +35,7 @@ class Saml2Grant extends AbstractGrant
      *
      * @var string
      */
-    protected $identifier = 'login';
+    protected $identifier = 'username';
 
     /**
      * Response type
@@ -107,19 +107,19 @@ class Saml2Grant extends AbstractGrant
         if (is_null($clientSecret)) {
             throw new Exception\InvalidRequestException('client_secret');
         }
-
-        $remote_session_id = $this->server->getRequest()->request->get(self::SAML2_SESSION_ID_FIELD, null);
-        if (is_null($remote_session_id))
+        
+        $username = $this->server->getRequest()->request->get(self::SAML2_USERNAME_FIELD, null);
+        if (is_null($username))
         {
-            throw new Exception\InvalidRequestException(self::SAML2_SESSION_ID_FIELD);
+            throw new Exception\InvalidRequestException(self::SAML2_USERNAME_FIELD);
         }
 
-        $login = $this->server->getRequest()->request->get(self::SAML2_LOGIN_FIELD, null);
-        if (is_null($login))
+        $remote_session_id = $this->server->getRequest()->request->get(self::SAML2_REMOTE_SESSION_ID_FIELD, null);
+        if (is_null($remote_session_id))
         {
-            throw new Exception\InvalidRequestException(self::SAML2_LOGIN_FIELD);
-        }        
-
+            throw new Exception\InvalidRequestException(self::SAML2_REMOTE_SESSION_ID_FIELD);
+        }
+        
         // Validate client ID and client secret
         $client = $this->server->getClientStorage()->get(
             $clientId,
@@ -134,13 +134,13 @@ class Saml2Grant extends AbstractGrant
         }
 
         $credentials = [
-            self::SAML2_SESSION_ID_FIELD => $remote_session_id,
-            self::SAML2_LOGIN_FIELD => $login
+            self::SAML2_REMOTE_SESSION_ID_FIELD => $remote_session_id,
+            self::SAML2_USERNAME_FIELD => $username
         ];
-
+        
         // Check if user's username and password are correct
         $userId = call_user_func($this->getVerifyCredentialsCallback(), $credentials );
-
+        
         if ($userId === false) {
             $this->server->getEventEmitter()->emit(new Event\UserAuthenticationFailedEvent($this->server->getRequest()));
             throw new Exception\InvalidCredentialsException();
