@@ -28,8 +28,9 @@ class Saml2Grant extends AbstractGrant
     * Define constants for the name of properties expected into the credentials.
     */
     const SAML2_USERNAME_FIELD = 'username';
-    const SAML2_REMOTE_SESSION_ID_FIELD = 'remote_session_id';
-    
+    const SAML2_TOKEN_FIELD = 'token';
+    const SAML2_PROVIDER_FIELD = 'provider';
+
     /**
      * Grant identifier
      *
@@ -107,19 +108,25 @@ class Saml2Grant extends AbstractGrant
         if (is_null($clientSecret)) {
             throw new Exception\InvalidRequestException('client_secret');
         }
-        
+
         $username = $this->server->getRequest()->request->get(self::SAML2_USERNAME_FIELD, null);
         if (is_null($username))
         {
             throw new Exception\InvalidRequestException(self::SAML2_USERNAME_FIELD);
         }
 
-        $remote_session_id = $this->server->getRequest()->request->get(self::SAML2_REMOTE_SESSION_ID_FIELD, null);
-        if (is_null($remote_session_id))
+        $token = $this->server->getRequest()->request->get(self::SAML2_TOKEN_FIELD, null);
+        if (is_null($token))
         {
-            throw new Exception\InvalidRequestException(self::SAML2_REMOTE_SESSION_ID_FIELD);
+            throw new Exception\InvalidRequestException(self::SAML2_TOKEN_FIELD);
         }
-        
+
+        $provider = $this->server->getRequest()->request->get(self::SAML2_PROVIDER_FIELD, null);
+        if (is_null($provider))
+        {
+            throw new Exception\InvalidRequestException(self::SAML2_PROVIDER_FIELD);
+        }
+
         // Validate client ID and client secret
         $client = $this->server->getClientStorage()->get(
             $clientId,
@@ -134,13 +141,14 @@ class Saml2Grant extends AbstractGrant
         }
 
         $credentials = [
-            self::SAML2_REMOTE_SESSION_ID_FIELD => $remote_session_id,
-            self::SAML2_USERNAME_FIELD => $username
+            self::SAML2_TOKEN_FIELD => $token,
+            self::SAML2_USERNAME_FIELD => $username,
+            self::SAML2_PROVIDER_FIELD => $provider
         ];
-        
+
         // Check if user's username and password are correct
         $userId = call_user_func($this->getVerifyCredentialsCallback(), $credentials );
-        
+
         if ($userId === false) {
             $this->server->getEventEmitter()->emit(new Event\UserAuthenticationFailedEvent($this->server->getRequest()));
             throw new Exception\InvalidCredentialsException();
